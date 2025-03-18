@@ -16,8 +16,9 @@ samples_y = samples_x ** 3
 
 # Step 3: Use a Kernel Density Estimator to estimate the PDF of Y
 kde = gaussian_kde(samples_y)
-y_vals = np.linspace(-100, 100, 1000)  # range over which to evaluate the density
+y_vals = np.linspace(-10, 10, 1000)  # range over which to evaluate the density
 pdf_estimate = kde(y_vals)
+
 
 # Plot the estimated PDF
 plt.plot(y_vals, pdf_estimate, label="Estimated PDF (KDE)")

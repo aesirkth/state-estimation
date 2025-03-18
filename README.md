@@ -16,3 +16,6 @@ Monte Carlo - "Brute Force approach", uses random sampling to estimate numerical
 The KF is an one dimensional altitude filter and relies on sensor data from a barometer and accelerometer.
 The EKF is an orientational kalman filter that uses euler angles, it relies on data from an accelerometer and a gyroscope.
 The PDF analysis is central when it comes to noise propagation in nonlinear systems.
+
+
+The PDF analysis folder is a tool for choosing which version of the kalman filter (EKF or SPKF-"UKF") one should apply for a nonlinear function.
