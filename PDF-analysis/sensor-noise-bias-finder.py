@@ -6,15 +6,15 @@ from scipy.stats import gaussian_kde
 """
 The following code is meant to collect a large sample of sensor readings when the sensor is static and with a true value X.
 The code will take N readings from the sensor and create a PDF of it's gaussian output x and give the covariance (noise) and
-potential bias. This information can be used when tuning filtering algorithms.
+potential bias. This information can be used when tuning filtering algorithms such as the Kalman Filter.
 """
 
 def get_sensor():
     # Some code that retrieves the sensor reading from a selected sensor.
     # For now lets have a gaussian distribution function here
-    return np.random.normal(loc=0, scale=1, size=1).item()
+    return np.random.normal(loc=3, scale=1, size=1).item()
 
-N = 1000 # number of samples
+N = 10000 # number of samples
 X = 0 # expected value (for static accelerometer = 0)
 samples = [] # sample list
 
@@ -24,12 +24,13 @@ for i in range(N):
 
 # Fit a gaussian PDF onto the samples using kernel density estimation
 sample_pdf = gaussian_kde(samples)
-covariance = sample_pdf.covariance
+
+covariance = np.std(samples)
 mean = np.mean(samples)
 
 # print information
 print('Noise/Covariance: ', covariance)
-print('Bias: ', X-mean)
+print('Bias: ', mean-X)
 
 # Plot the estimated PDF
 xs = np.linspace(min(samples), max(samples), N)
