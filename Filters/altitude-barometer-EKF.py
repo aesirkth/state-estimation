@@ -30,17 +30,29 @@ def get_B(dt):
         [0,       0, 1]
     ])
 
-# H matrix, note that H is actually nonlinear. This is not correct.
-def get_H():
-    return np.array([[1, 0, 0]])
-
-# Pressure to altitude conversion
-def get_height(pbaro):
-    P0 = 101325
+# h: Predicts pressure from altitude using barometric formula
+def h(h_est):
+    P0 = 101325.0
     T0 = 288.15
     L  = 0.0065
-    R = 287.05
-    return np.array([(T0 / L) * (1.0 - (pbaro / P0)**(R * L / g))])
+    g_const = 9.81
+    R_const = 287.05
+    base = 1 - (L * h_est / T0)
+    if base < 1e-6: base = 1e-6
+    return P0 * (base ** (g_const / (R_const * L)))
+
+# H: Jacobian of pressure prediction function
+def H(h_est):
+    P0 = 101325.0
+    T0 = 288.15
+    L  = 0.0065
+    g_const = 9.81
+    R_const = 287.05
+    base = 1 - (L * h_est / T0)
+    if base < 1e-6: base = 1e-6
+    exponent = (g_const / (R_const * L)) - 1.0
+    dpdh = -P0 * (g_const / (R_const * T0)) * (base ** exponent)
+    return np.array([[dpdh, 0, 0]])
 
 # Prediction step KF
 def predict(x, P, Q, u, dt):
@@ -53,13 +65,17 @@ def predict(x, P, Q, u, dt):
 
 # Correction step KF
 def correct(x, P, R, pbaro):
-    H = get_H()
-    z = get_height(pbaro)
-    y = z - H @ x
-    S = H @ P @ H.T + R
-    K = P @ H.T @ np.linalg.inv(S)
+    z = np.array([[pbaro]])  # Use raw pressure directly
+    h_est = x[0,0]
+    z_pred = h(h_est)
+    H_jac = H(h_est)
+    
+    y = z - np.array([[z_pred]])
+    S = H_jac @ P @ H_jac.T + R
+    K = P @ H_jac.T @ np.linalg.inv(S)
+    
     x = x + K @ y
-    P = (np.eye(3) - K @ H) @ P
+    P = (np.eye(3) - K @ H_jac) @ P
     return x, P
 
 # Needs input of Q, R and initial P
