@@ -1,7 +1,11 @@
 import numpy as np
+import pandas as pd
 from scipy.integrate import solve_ivp, simpson
+from scipy.interpolate import interp1d
+
 
 # NOTE: Apogee estimator needs proper drag coefficient to work.
+
 
 # Default definitions for Q, R, P
 accelerometer_noise = 0.3
@@ -10,12 +14,24 @@ P = np.eye(3) * 0.01
 Q = np.eye(3) * (accelerometer_noise**2)
 R = np.eye(1) * (barometer_noise**2)
 
-# Constants
+# constants
 g   = 9.81
 rho = 1.225
 m   = 20
-Cd  = 0.45
 A   = 0.0186
+
+# Drag Coefficient
+def Cd_function(): # assumption: angle of attack = 0
+    simulation = pd.read_excel('CD_simulation.xlsx') 
+    velocity_vals = simulation['m/s'].tolist()
+    CD_vals = simulation['CD'].tolist()
+
+    f_interp = interp1d(velocity_vals, CD_vals, kind='linear')  # 'linear' interpolation
+
+    return f_interp
+
+Cd_f = Cd_function()
+
 
 # A matrix
 def get_A(dt):
@@ -32,8 +48,6 @@ def get_B(dt):
         [0,       0, dt],
         [0,       0, 1]
     ])
-
-
 
 # Prediction step KF
 def predict(x, P, Q, u, dt):
@@ -91,15 +105,13 @@ def correct(x, P, R, pbaro):
     return x, P
 
 # Apogee estimator
-def calculate_apogee(h0, v0, a0, g, rho, Cd, A, m): # measurements are 0 as in initial values of the differential
+def calculate_apogee(h0, v0, a0, g, rho, Cd_f, A, m): # measurements are 0 as in initial values of the differential
     if a0 < 0 and h0 > 10 and v0 > 5:
 
         def dvdt(t, v): 
-            if v > 5:
-                Cd_real = Cd*((90/v0)**0.1)
-            else: Cd_real = Cd
+            Cd = Cd_f(v)
 
-            return -np.sign(v) * 0.5 * (rho * Cd_real * A * v**2) / m - g
+            return -np.sign(v) * 0.5 * (rho * Cd * A * v**2) / m - g
         
         def event_v_zero(t, v): return v[0]
         event_v_zero.terminal, event_v_zero.direction = True, -1
@@ -120,5 +132,5 @@ def kf_runner(x, P, Q, R, u, pbaro, dt):
     current_velocity = x[1].item()
     current_acceleration = x[2].item()
 
-    apogee = calculate_apogee(current_height, current_velocity, current_acceleration, g, rho, Cd, A, m)
+    apogee = calculate_apogee(current_height, current_velocity, current_acceleration, g, rho, Cd_f, A, m)
     return x, P
