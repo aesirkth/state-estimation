@@ -3,10 +3,6 @@ import pandas as pd
 from scipy.integrate import solve_ivp, simpson
 from scipy.interpolate import interp1d
 
-
-# NOTE: Apogee estimator needs proper drag coefficient to work.
-
-
 # Default definitions for Q, R, P
 accelerometer_noise = 0.3
 barometer_noise     = 1.0 # Should be lower than accelerometer, noise needs fixing.

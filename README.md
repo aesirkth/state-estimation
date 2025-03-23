@@ -6,16 +6,17 @@ KF - Kalman Filter
 
 EKF - Extended Kalman Filter
 
-Plain - A loose bit of code meant to be implementet in a larger system (flight computer), can not run itself.
-
 PDF - Probability Density Function
 
 Monte Carlo - "Brute Force approach", uses random sampling to estimate numerical results
 
 
-The KF is an one dimensional altitude filter and relies on sensor data from a barometer and accelerometer.
-The EKF is an orientational kalman filter that uses euler angles, it relies on data from an accelerometer and a gyroscope.
-The PDF analysis is central when it comes to noise propagation in nonlinear systems.
 
 
-The PDF analysis folder is a tool for choosing which version of the kalman filter (EKF or SPKF-"UKF") one should apply for a nonlinear function.
+The altitude-ekf is an one dimensional altitude EKF and relies on sensor data from a barometer and accelerometer.
+
+
+The attitude-ekf is an orientational EKF that uses euler angles, it relies on data from an accelerometer and a gyroscope.
+
+
+The PDF analysis folder is a tool for choosing which version of the kalman filter (EKF or SPKF-"UKF") one should apply for a nonlinear function. The script sensor-pdf-finder stands out, it finds noise and bias given a large amount of random variable samples.
