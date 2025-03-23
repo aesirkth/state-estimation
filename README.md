@@ -20,3 +20,6 @@ The attitude-ekf is an orientational EKF that uses euler angles, it relies on da
 
 
 The PDF analysis folder is a tool for choosing which version of the kalman filter (EKF or SPKF-"UKF") one should apply for a nonlinear function. The script sensor-pdf-finder stands out, it finds noise and bias given a large amount of random variable samples.
+
+
+For the filter-tester to give accurate results there needs to be an outlier value handler that can handle barometer going crazy during transonic phase (sonic boom).
