@@ -18,7 +18,7 @@ A   = 0.0186
 
 # Drag Coefficient
 def Cd_function(): # assumption: angle of attack = 0
-    simulation = pd.read_excel('cd_simulation.xlsx') 
+    simulation = pd.read_excel('GitHubAesir\\algorithms\\cd_simulation.xlsx') 
     velocity_vals = simulation['m/s'].tolist()
     CD_vals = simulation['CD'].tolist()
 
