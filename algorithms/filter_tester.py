@@ -21,7 +21,7 @@ A   = 0.0186
 
 # Drag Coefficient
 def Cd_function(): # assumption: angle of attack = 0
-    simulation = pd.read_excel('GitHubAesir\\algorithms\\cd_simulation.xlsx') 
+    simulation = pd.read_excel('state-estimation\\algorithms\\cd_simulation.xlsx') 
     velocity_vals = simulation['m/s'].tolist()
     CD_vals = simulation['CD'].tolist()
 
@@ -108,7 +108,7 @@ def kf_runner(x, P, Q, R, u, pbaro, dt):
 
 # Function to extract data
 def get_test_data(): 
-    flight_data = pd.read_excel('GitHubAesir\\algorithms\\signyflight2023.xlsx') 
+    flight_data = pd.read_excel('state-estimation\\algorithms\\signyflight2023.xlsx') 
     ax_lst = flight_data['ax'].tolist()
     ay_lst = flight_data['ay'].tolist()
     az_lst = flight_data['az'].tolist()
