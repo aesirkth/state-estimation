@@ -159,11 +159,6 @@ times = times[v_max_index+1:] # Only after burn phase
 # ====================================================
 
 def ode_ballistic(t, state):
-    """
-    ODE for the ballistic flight.
-    state: [x, y, vx, vy]
-    Here, t is the actual global time.
-    """
     # Get the time-dependent parameters using the absolute time t.
     rho = env.density(t)
     m = freya.total_mass(t)
@@ -186,23 +181,23 @@ def ode_ballistic(t, state):
 
 def integrate_ballistic(initial_absolute_time, initial_state, duration=30, dt=0.1):
     solver = ode(lambda t, y: ode_ballistic(t, y))
-    # Set the solver's clock to the current global time.
     solver.set_integrator('dopri5')
     solver.set_initial_value(initial_state, initial_absolute_time)
     
-    t_vals = []
-    y_vals = []
-    
+    apogee_value = None
     # Run until the absolute time reaches initial_absolute_time + duration.
     while solver.successful() and solver.t < (initial_absolute_time + duration):
-        t_vals.append(solver.t)
-        y_vals.append(solver.y.copy())
-        # Stop if vertical velocity becomes negative.
+        # Check if vertical velocity becomes negative (i.e. we've passed apogee)
         if solver.t > initial_absolute_time and solver.y[3] < 0:
+            # The second element of the state is the altitude
+            apogee_value = solver.y[1]
             break
         solver.integrate(solver.t + dt)
-        
-    return np.array(t_vals), np.array(y_vals)
+    
+    # If the loop ends without the velocity condition, return the last computed altitude.
+    if apogee_value is None:
+        apogee_value = solver.y[1]
+    return apogee_value
 
 
 # ====================================================
@@ -225,10 +220,10 @@ for t in times:
 
     # Use state indices [x, y, vx, vy] for the ballistic simulation
     initial_state = [state[2], state[3], state[5], state[6]]
-    
+
     # Integrate the ballistic trajectory from the current state
-    t_ballistic, state_sol = integrate_ballistic(t, initial_state, duration=30, dt=0.1)
-    apogee_value = state_sol[-1, 1]
+    apogee_value = integrate_ballistic(t, initial_state, duration=30, dt=0.1)
+
 
     apogee_predictions.append(apogee_value)
 

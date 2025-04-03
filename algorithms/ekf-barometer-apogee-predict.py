@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy.integrate import solve_ivp, simpson
+from scipy.integrate import ode
 from scipy.interpolate import interp1d
 
 # Default definitions for Q, R, P
@@ -13,7 +13,7 @@ R = np.eye(1) * (barometer_noise**2)
 # constants
 g   = 9.81
 rho = 1.225
-m   = 20
+m_dry   = 20 
 A   = 0.0186
 
 # Drag Coefficient
@@ -101,26 +101,46 @@ def correct(x, P, R, pbaro):
     return x, P
 
 # Apogee estimator
-def calculate_apogee(h0, v0, a0, g, rho, Cd_f, A, m): # measurements are 0 as in initial values of the differential
-    if a0 < 0 and h0 > 10 and v0 > 5:
+def ode_ballistic(t, state):
+    vy = state[2]
+    vz = state[3]
+    v = np.sqrt((vy**2)+(vz**2))
 
-        def dvdt(t, v): 
-            Cd = Cd_f(v)
+    # Retrieve a drag coefficient based on the current velocity.
+    Cd_val = float(Cd_f(v)) if v > 15 else 0.4
 
-            return -np.sign(v) * 0.5 * (rho * Cd * A * v**2) / m - g
-        
-        def event_v_zero(t, v): return v[0]
-        event_v_zero.terminal, event_v_zero.direction = True, -1
-        sol = solve_ivp(dvdt, (0, 50), [v0], method='RK45',
-                        events=event_v_zero, t_eval=np.linspace(0, 50, 500))
-        if sol.t_events[0].size > 0:
-            tvz = sol.t_events[0][0]
-            idx = sol.t <= tvz
-            return h0 + simpson(sol.y[0][idx], sol.t[idx])
-    return None
+    dydt = vy
+    dzdt = vz
+    dvydt = -((rho * Cd_val * A) / (2 * m_dry)) * vy * np.sqrt(vy**2 + vz**2)
+    dvzdt = -g - ((rho * Cd_val * A) / (2 * m_dry)) * vz * np.sqrt(vy**2 + vz**2)
+    
+    return [dydt, dzdt, dvydt, dvzdt]
+
+
+def integrate_ballistic(initial_absolute_time, initial_state, duration=30, dt=0.1):
+    solver = ode(lambda t, y: ode_ballistic(t, y))
+    solver.set_integrator('dopri5')
+    solver.set_initial_value(initial_state, initial_absolute_time)
+    
+    apogee_value = None
+    # Run until the absolute time reaches initial_absolute_time + duration.
+    while solver.successful() and solver.t < (initial_absolute_time + duration):
+        # Check if vertical velocity becomes negative (i.e. we've passed apogee)
+        if solver.t > initial_absolute_time and solver.y[3] < 0:
+            # The second element of the state is the altitude
+            apogee_value = solver.y[1]
+            break
+        solver.integrate(solver.t + dt)
+    
+    # If the loop ends without the velocity condition, return the last computed altitude.
+    if apogee_value is None:
+        apogee_value = solver.y[1]
+    return apogee_value
+
+
 
 # Needs input of Q, R and initial P
-def kf_runner(x, P, Q, R, u, pbaro, dt):
+def kf_runner(x, P, Q, R, u, pbaro, t, dt):
     x, P = predict(x, P, Q, u, dt)
     x, P = correct(x, P, R, pbaro)
     
@@ -128,5 +148,7 @@ def kf_runner(x, P, Q, R, u, pbaro, dt):
     current_velocity = x[1].item()
     current_acceleration = x[2].item()
 
-    apogee = calculate_apogee(current_height, current_velocity, current_acceleration, g, rho, Cd_f, A, m)
+    initial_state = [0, current_height, 0, current_velocity] # y, z, vy, vz
+
+    apogee = integrate_ballistic(t, initial_state, duration=30, dt=0.1)
     return x, P
