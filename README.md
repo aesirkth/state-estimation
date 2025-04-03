@@ -23,3 +23,6 @@ The PDF analysis folder is a tool for choosing which version of the kalman filte
 
 
 For the filter-tester to give accurate results there needs to be an outlier value handler that can handle barometer going crazy during transonic phase (sonic boom).
+
+
+Rocketpy simulation needs to be refined, gives much too large apogee
