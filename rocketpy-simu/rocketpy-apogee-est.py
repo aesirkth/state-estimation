@@ -149,7 +149,10 @@ times = test_flight.solution_array[:, 0]
 # Find altitude at maximum velocity (end of burn phase) and apogee.
 v_max_index = np.argmax(test_flight.solution_array[:, 6])
 altitude_at_vmax = test_flight.solution_array[:, 3][v_max_index]
+
 h_max = np.max(test_flight.solution_array[:, 3])
+v_max = np.max(test_flight.solution_array[:, 6])
+
 
 times = times[v_max_index+1:] # Only after burn phase
 
@@ -158,15 +161,15 @@ times = times[v_max_index+1:] # Only after burn phase
 # Part 3: Ballistic trajectory simulation functions
 # ====================================================
 
-def ode_ballistic(t, state):
+def ode_ballistic(t, intial_state):
     # Get the time-dependent parameters using the absolute time t.
     rho = env.density(t)
     m = freya.total_mass(t)
     g_val = 9.81
     A = math.pi * freya.radius**2
 
-    vx = state[2]
-    vy = state[3]
+    vx = initial_state[2]
+    vy = initial_state[3]
     # Retrieve a drag coefficient based on the current velocity.
     v = np.sqrt(vx**2 + vy**2)
     Cd_val = float(Cd_ms(v)) if v > 15 else 0.4
@@ -205,6 +208,7 @@ def integrate_ballistic(initial_absolute_time, initial_state, duration=30, dt=0.
 # ====================================================
 
 apogee_predictions = []
+apogee_predictions_errors = []
 
 # Loop over each time t from the flight simulation
 for t in times:
@@ -215,7 +219,6 @@ for t in times:
     m_t = freya.total_mass(t)            # rocket mass at time t
     rho_t = env.density(altitude_ASL)     # local air density
     g_const = 9.81
-    
 
 
     # Use state indices [x, y, vx, vy] for the ballistic simulation
@@ -226,14 +229,18 @@ for t in times:
 
 
     apogee_predictions.append(apogee_value)
+    apogee_predictions_errors.append(((apogee_value-h_max)/h_max)*100)
 
 apogee_predictions = np.array(apogee_predictions)
+apogee_predictions_errors = np.array(apogee_predictions_errors)
+
 
 # ====================================================
 # Part 5: Plot information
 # ====================================================
 
-print(f'Burn stops at {altitude_at_vmax:.2f} m')
+print(f'Burn stops at: {altitude_at_vmax:.2f} m')
+print(f'Maximum velocity: {v_max} m/s')
 print(f'Apogee from simulation: {h_max:.2f} m')
 
 # Plot: Apogee Prediction vs. Time
@@ -241,9 +248,22 @@ plt.figure()
 plt.plot(times, apogee_predictions, 'r-', linewidth=2, label="Ballistic Apogee Prediction")
 plt.xlim(0, 50)
 plt.ylim(0, 5000)
+
 plt.xlabel("Time (s)")
 plt.ylabel("Predicted Apogee (m)")
 plt.title("Apogee Prediction vs. Time")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Plot: Apogee Prediction Error vs. Time
+plt.figure()
+plt.plot(times, apogee_predictions_errors, 'r-', linewidth=2, label="Ballistic Apogee Prediction Error")
+plt.xlim(0, 50)
+plt.ylim(-20, 20)
+plt.xlabel("Time (s)")
+plt.ylabel("Predicted Apogee Error (%)")
+plt.title("Apogee Prediction Error vs. Time")
 plt.legend()
 plt.grid(True)
 plt.show()
