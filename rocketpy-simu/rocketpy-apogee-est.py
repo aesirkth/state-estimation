@@ -161,7 +161,7 @@ times = times[v_max_index+1:] # Only after burn phase
 # Part 3: Ballistic trajectory simulation functions
 # ====================================================
 
-def ode_ballistic(t, intial_state):
+def ode_ballistic(t, initial_state):
     # Get the time-dependent parameters using the absolute time t.
     rho = env.density(t)
     m = freya.total_mass(t)
