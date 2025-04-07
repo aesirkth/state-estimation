@@ -10,15 +10,11 @@ P = np.eye(3) * 0.01
 Q = np.eye(3) * (accelerometer_noise**2)
 R = np.eye(1) * (barometer_noise**2)
 
-# constants
-g   = 9.81
-rho = 1.225
-m_dry   = 20 
-A   = 0.0186
+constants = [9.81, 1.225, 20, 0.0186] # g, rho, m_dry, A
 
 # Drag Coefficient
 def Cd_function(): # assumption: angle of attack = 0
-    simulation = pd.read_excel('state-estimation\\algorithms\\cd_simulation.xlsx') 
+    simulation = pd.read_excel('algorithms\\cd_simulation.xlsx') 
     velocity_vals = simulation['m/s'].tolist()
     CD_vals = simulation['CD'].tolist()
 
@@ -47,6 +43,7 @@ def get_B(dt):
 
 # Prediction step KF
 def predict(x, P, Q, u, dt):
+    g = 9.81
     az = -u[2] - g  # net acceleration (subtract gravity)
     A  = get_A(dt)
     B  = get_B(dt)
@@ -101,7 +98,13 @@ def correct(x, P, R, pbaro):
     return x, P
 
 # Apogee estimator
-def ode_ballistic(t, state):
+def ode_ballistic(t, state, constants):
+    # [rho, m, g_val, A]
+    g = constants[0]
+    rho = constants[1]
+    m_dry = constants[2]
+    A = constants[3]
+
     vy = state[2]
     vz = state[3]
     v = np.sqrt((vy**2)+(vz**2))
@@ -117,8 +120,8 @@ def ode_ballistic(t, state):
     return [dydt, dzdt, dvydt, dvzdt]
 
 
-def integrate_ballistic(initial_absolute_time, initial_state, duration=30, dt=0.1):
-    solver = ode(lambda t, y: ode_ballistic(t, y))
+def integrate_ballistic(initial_absolute_time, initial_state, constants, duration=30, dt=0.1):
+    solver = ode(lambda t, y: ode_ballistic(t, y, constants))
     solver.set_integrator('dopri5')
     solver.set_initial_value(initial_state, initial_absolute_time)
     

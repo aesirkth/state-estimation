@@ -2,7 +2,7 @@ import numpy as np
 
 # Default definitions for Q, R, P
 accelerometer_noise = 0.3
-barometer_noise     = 1.0 # Should be lower than accelerometer, noise needs fixing.
+barometer_noise     = 1.0 
 P = np.eye(3) * 0.01
 Q = np.eye(3) * (accelerometer_noise**2)
 R = np.eye(1) * (barometer_noise**2)

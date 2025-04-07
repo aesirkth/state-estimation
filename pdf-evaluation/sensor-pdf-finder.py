@@ -45,7 +45,6 @@ counter = 0
 # retrieve samples
 for i in range(N):
     samples.append(get_sensor(mpu_sensor, baro_sensor))
-    time.sleep(0.01)
     counter+=1
     print(counter)
 
