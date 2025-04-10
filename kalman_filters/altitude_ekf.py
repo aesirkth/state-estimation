@@ -56,10 +56,10 @@ def H(h_est):
 
 # Prediction step KF
 def predict(x, P, Q, u, dt):
-    az = -u[2] - g  # net acceleration (subtract gravity)
+    u[2] -= g
     A  = get_A(dt)
     B  = get_B(dt)
-    x  = A @ x + B @ np.array([[az]])
+    x  = A @ x + B @ u
     P  = A @ P @ A.T + Q
     return x, P
 
