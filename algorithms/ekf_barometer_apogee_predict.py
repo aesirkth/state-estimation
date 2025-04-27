@@ -111,11 +111,17 @@ def ode_ballistic(t, state, constants):
 
     # Retrieve a drag coefficient based on the current velocity.
     Cd_val = float(Cd_f(v)) if v > 15 else 0.4
+    
+    # Acceleration from drag
+    a = (rho * Cd_val * A * v**2) / (2 * m)
+
+    # Retrieve a ballistic coefficient based on the current velocity and assume constant acceleration.
+    C_b = rho * v**2 / (2 * a)
 
     dydt = vy
     dzdt = vz
-    dvydt = -((rho * Cd_val * A) / (2 * m_dry)) * vy * np.sqrt(vy**2 + vz**2)
-    dvzdt = -g - ((rho * Cd_val * A) / (2 * m_dry)) * vz * np.sqrt(vy**2 + vz**2)
+    dvydt = 0    #Unimportant for ballistic coefficient model
+    dvzdt = - g - (rho * (dydt**2))/(2 * C_b)
     
     return [dydt, dzdt, dvydt, dvzdt]
 
