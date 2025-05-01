@@ -121,7 +121,7 @@ def ode_ballistic(t, state, constants):
     dydt = vy
     dzdt = vz
     dvydt = 0    #Unimportant for ballistic coefficient model
-    dvzdt = - g - (rho * (dydt**2))/(2 * C_b)
+    dvzdt = - g - (rho * (dzdt**2))/(2 * C_b)
     
     return [dydt, dzdt, dvydt, dvzdt]
 
